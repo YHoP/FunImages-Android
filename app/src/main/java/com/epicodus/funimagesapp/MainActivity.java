@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void run() {
 
-                String flickrUrl = "https://www.flickr.com/photos/" + mPhotoUrls.get(0).getPhotoId() + "/" + mPhotoUrls.get(0).getUserId();
+                String flickrUrl = "http://farm1.staticflickr.com/" + mPhotoUrls.get(0).getServer() + "/" + mPhotoUrls.get(0).getPhotoId() + "_" + mPhotoUrls.get(0).getSecret() + "_b.jpg";
                 Ion.with(mTest).load(flickrUrl);
 
 
@@ -118,13 +118,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 float speed = Math.abs(x + y + z - last_x - last_y - last_z)/diffTime * 10000;
 
                 if(speed > SHAKE_THRESHOLD) {
-                    if (isVisiable){
-                        mTest.setVisibility(View.INVISIBLE);
-                        isVisiable = false;
-                    } else {
-                        mTest.setVisibility(View.VISIBLE);
-                        isVisiable = true;
-                    }
+//                    if (isVisiable){
+//                        mTest.setVisibility(View.INVISIBLE);
+//                        isVisiable = false;
+//                    } else {
+//                        mTest.setVisibility(View.VISIBLE);
+//                        isVisiable = true;
+//                    }
                 }
 
                 last_x = x;
@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 last_z = z;
 
 //                Toast.makeText(this, "Last_x: " + last_x + "Last_y: " + last_y + "Last_z: " + last_z, Toast.LENGTH_LONG).show();
-                Log.i(" last x , y, z", last_x + ", " + last_y + ", " + last_z);
+//                Log.i(" last x , y, z", last_x + ", " + last_y + ", " + last_z);
             }
         }
 
@@ -158,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void getFlickrPhoto(final Runnable runnable){
 
         String apiKey = "d5efdb80291dbd978c44ca25672aa5aa";
-        String flickrURL = "https://api.flickr.com/services/rest/?&method=flickr.photos.getRecent&api_key=" + apiKey + "&format=json";
+        String flickrURL = "https://api.flickr.com/services/rest/?&method=flickr.photos.getRecent&api_key=" + apiKey + "&format=json&per_page=1";
 
     if (isNetworkAvailable()){
         OkHttpClient client = new OkHttpClient();
@@ -174,8 +174,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onResponse(Response response) throws IOException {
                 try{
+
                     String jsonData = response.body().string();
+                    jsonData = jsonData.replace("jsonFlickrApi(", "");
+                    jsonData = jsonData.substring(0, jsonData.length()-1);
+
+
                     Log.v("JsonData: ", jsonData);
+
                     if(response.isSuccessful()){
                         mPhotoUrls = getFlickrPhotoUrl(jsonData);
 
@@ -198,19 +204,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private ArrayList<PhotoUrl> getFlickrPhotoUrl(String jsonData) throws JSONException{
 
-        ArrayList<PhotoUrl> photoURLArrayList = new ArrayList<>();
-        JSONObject photoData = new JSONObject(jsonData);
 
-        String photoInfo = photoData.getString("photos");
+        ArrayList<PhotoUrl> photoURLArrayList = new ArrayList<>();
+        JSONObject photosData = new JSONObject(jsonData);
+        String photosInfo = photosData.getString("photos");
+        Log.v("Photos Data: ", photosInfo);
+
+        JSONObject photoData = new JSONObject(photosInfo);
+        String photoInfo = photoData.getString("photo");
+        Log.v("Photo Data: ", photoInfo);
 
         JSONArray jsonArray = new JSONArray(photoInfo);
 
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonPart = jsonArray.getJSONObject(i);
             String photoId = jsonPart.getString("id");
-            String photoOwner = jsonPart.getString("owner");
 
-            PhotoUrl thisPhoto = new PhotoUrl(photoId, photoOwner);
+            String photoSecret = jsonPart.getString("secret");
+            String photoServer = jsonPart.getString("server");
+
+            Log.v("Photo ID: ", photoId);
+
+            PhotoUrl thisPhoto = new PhotoUrl(photoId, photoSecret, photoServer);
             photoURLArrayList.add(thisPhoto);
 
         }

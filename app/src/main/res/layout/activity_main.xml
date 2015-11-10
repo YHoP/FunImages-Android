@@ -10,12 +10,13 @@
 
     <ImageView
         android:text="@string/hello_world"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:textSize="24sp"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:id="@+id/testing"
-        android:src="@android:mipmap/sym_def_app_icon"/>
+        android:src="@android:mipmap/sym_def_app_icon"
+        />
 
 </RelativeLayout>
