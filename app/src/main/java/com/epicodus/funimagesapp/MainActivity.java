@@ -44,8 +44,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Sensor mSensor;
     private long lastUpdate = 0;
     private float last_x, last_y, last_z;
-    private static final int SHAKE_THRESHOLD = 600;
+    private static final int SHAKE_THRESHOLD = 1000;
     public ArrayList<PhotoUrl> mPhotoUrls;
+    int mIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,9 +62,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void run() {
 
-                String flickrUrl = "http://farm1.staticflickr.com/" + mPhotoUrls.get(0).getServer() + "/" + mPhotoUrls.get(0).getPhotoId() + "_" + mPhotoUrls.get(0).getSecret() + "_b.jpg";
-                Ion.with(mTest).load(flickrUrl);
-
+                setImageFromURL();
 
 //                for (PhotoUrl photoUrl : photoUrlArray) {
 //                    String flickrUrl = "https://www.flickr.com/photos/" + photoUrl.getPhotoId() + "/" + photoUrl.getUserId();
@@ -76,6 +75,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         getFlickrPhoto(getPhotoArrayList);
 
+    }
+
+    private void setImageFromURL() {
+
+        if (mIndex == mPhotoUrls.size()){
+            mIndex = 0;
+        }
+
+        String flickrUrl = "http://farm1.staticflickr.com/"
+                + mPhotoUrls.get(mIndex).getServer() + "/" + mPhotoUrls.get(mIndex).getPhotoId() + "_" + mPhotoUrls.get(mIndex).getSecret() + "_b.jpg";
+        Ion.with(mTest).load(flickrUrl);
+        mIndex++;
     }
 
     @Override
@@ -118,7 +129,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 float speed = Math.abs(x + y + z - last_x - last_y - last_z)/diffTime * 10000;
 
                 if(speed > SHAKE_THRESHOLD) {
+                    setImageFromURL();
+
+
 //                    if (isVisiable){
+//                        setImageFromURL();
 //                        mTest.setVisibility(View.INVISIBLE);
 //                        isVisiable = false;
 //                    } else {
@@ -158,47 +173,45 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void getFlickrPhoto(final Runnable runnable){
 
         String apiKey = "d5efdb80291dbd978c44ca25672aa5aa";
-        String flickrURL = "https://api.flickr.com/services/rest/?&method=flickr.photos.getRecent&api_key=" + apiKey + "&format=json&per_page=1";
+        String flickrURL = "https://api.flickr.com/services/rest/?&method=flickr.photos.getRecent&api_key=" + apiKey + "&format=json&per_page=50";
 
-    if (isNetworkAvailable()){
-        OkHttpClient client = new OkHttpClient();
-        final Request request = new Request.Builder().url(flickrURL).build();
-        Call call = client.newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(Request request, IOException e) {
+        if (isNetworkAvailable()){
+            OkHttpClient client = new OkHttpClient();
+            final Request request = new Request.Builder().url(flickrURL).build();
+            Call call = client.newCall(request);
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(Request request, IOException e) {
 //                    Toast.makeText(getApplicationContext(), "Error, plase try again", Toast.LENGTH_LONG).show();
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onResponse(Response response) throws IOException {
-                try{
-
-                    String jsonData = response.body().string();
-                    jsonData = jsonData.replace("jsonFlickrApi(", "");
-                    jsonData = jsonData.substring(0, jsonData.length()-1);
-
-
-                    Log.v("JsonData: ", jsonData);
-
-                    if(response.isSuccessful()){
-                        mPhotoUrls = getFlickrPhotoUrl(jsonData);
-
-                        runOnUiThread(runnable);
-                    }
-
-                } catch (IOException e){
-                    Log.e("Flickr", "Exception Caught", e);
-                }catch (JSONException e){
-                    Log.e("Flickr", "Exception Caught", e);
+                    e.printStackTrace();
                 }
 
-            }
-        });
+                @Override
+                public void onResponse(Response response) throws IOException {
+                    try{
 
-   }
+                        String jsonData = response.body().string();
+                        jsonData = jsonData.replace("jsonFlickrApi(", "");
+                        jsonData = jsonData.substring(0, jsonData.length()-1);
 
+                        Log.v("JsonData: ", jsonData);
+
+                        if(response.isSuccessful()){
+                            mPhotoUrls = getFlickrPhotoUrl(jsonData);
+
+                            runOnUiThread(runnable);
+                        }
+
+                    } catch (IOException e){
+                        Log.e("Flickr", "Exception Caught", e);
+                    }catch (JSONException e){
+                        Log.e("Flickr", "Exception Caught", e);
+                    }
+
+                }
+            });
+
+        }
 
     }
 
