@@ -24,6 +24,7 @@ import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -61,20 +62,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Runnable getPhotoArrayList = new Runnable() {
             @Override
             public void run() {
-
                 setImageFromURL();
-
-//                for (PhotoUrl photoUrl : photoUrlArray) {
-//                    String flickrUrl = "https://www.flickr.com/photos/" + photoUrl.getPhotoId() + "/" + photoUrl.getUserId();
-//                    Ion.with(mTest).load(flickrUrl);
-//                }
-
             }
         };
 
-
         getFlickrPhoto(getPhotoArrayList);
-
     }
 
     private void setImageFromURL() {
@@ -83,9 +75,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             mIndex = 0;
         }
 
-        String flickrUrl = "http://farm1.staticflickr.com/"
-                + mPhotoUrls.get(mIndex).getServer() + "/" + mPhotoUrls.get(mIndex).getPhotoId() + "_" + mPhotoUrls.get(mIndex).getSecret() + "_b.jpg";
-        Ion.with(mTest).load(flickrUrl);
+        String flickrUrl = "http://farm" + mPhotoUrls.get(mIndex).getFarm() +".staticflickr.com/"
+                + mPhotoUrls.get(mIndex).getServer() + "/" + mPhotoUrls.get(mIndex).getPhotoId()
+                + "_" + mPhotoUrls.get(mIndex).getSecret() + "_b.jpg";
+
+        Picasso.with(this).load(flickrUrl).into(mTest);
+
+//        Ion.with(mTest).load(flickrUrl);
+
         mIndex++;
     }
 
@@ -173,7 +170,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void getFlickrPhoto(final Runnable runnable){
 
         String apiKey = "d5efdb80291dbd978c44ca25672aa5aa";
-        String flickrURL = "https://api.flickr.com/services/rest/?&method=flickr.photos.getRecent&api_key=" + apiKey + "&format=json&per_page=50";
+//        String flickrURL = "https://api.flickr.com/services/rest/?&method=flickr.photos.getRecent&api_key=" + apiKey + "&extras=tags%3Ddogs&format=json&per_page=50";
+
+        String flickrURL = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=" + apiKey +
+                "&tags=cat&format=json";
 
         if (isNetworkAvailable()){
             OkHttpClient client = new OkHttpClient();
@@ -232,13 +232,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonPart = jsonArray.getJSONObject(i);
             String photoId = jsonPart.getString("id");
-
             String photoSecret = jsonPart.getString("secret");
             String photoServer = jsonPart.getString("server");
+            String photoFarm = jsonPart.getString("farm");
 
             Log.v("Photo ID: ", photoId);
 
-            PhotoUrl thisPhoto = new PhotoUrl(photoId, photoSecret, photoServer);
+            PhotoUrl thisPhoto = new PhotoUrl(photoId, photoSecret, photoServer, photoFarm);
             photoURLArrayList.add(thisPhoto);
 
         }
