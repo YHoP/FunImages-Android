@@ -13,6 +13,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,6 +32,7 @@ import com.squareup.picasso.Picasso;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,6 +44,8 @@ import butterknife.ButterKnife;
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     @Bind(R.id.testing) ImageView mTest;
+    @Bind(R.id.getImage) Button mGetImage;
+    @Bind(R.id.imageTag) EditText mImageTag;
     Boolean isVisiable = true;
     private SensorManager mSensorManager;
     private Sensor mSensor;
@@ -59,14 +65,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mSensor, mSensorManager.SENSOR_DELAY_NORMAL);
 
-        Runnable getPhotoArrayList = new Runnable() {
+        final Runnable getPhotoArrayList = new Runnable() {
             @Override
             public void run() {
                 setImageFromURL();
             }
         };
+        mGetImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String mTag = mImageTag.getText().toString();
+                getFlickrPhoto(getPhotoArrayList, mTag);
 
-        getFlickrPhoto(getPhotoArrayList);
+                InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+            }
+        });
+
     }
 
     private void setImageFromURL() {
@@ -77,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         String flickrUrl = "http://farm" + mPhotoUrls.get(mIndex).getFarm() +".staticflickr.com/"
                 + mPhotoUrls.get(mIndex).getServer() + "/" + mPhotoUrls.get(mIndex).getPhotoId()
-                + "_" + mPhotoUrls.get(mIndex).getSecret() + "_b.jpg";
+                + "_" + mPhotoUrls.get(mIndex).getSecret() + "_m.jpg";
 
         Picasso.with(this).load(flickrUrl).into(mTest);
 
@@ -167,13 +182,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
-    public void getFlickrPhoto(final Runnable runnable){
+    public void getFlickrPhoto(final Runnable runnable, String mTag){
 
         String apiKey = "d5efdb80291dbd978c44ca25672aa5aa";
 //        String flickrURL = "https://api.flickr.com/services/rest/?&method=flickr.photos.getRecent&api_key=" + apiKey + "&extras=tags%3Ddogs&format=json&per_page=50";
 
         String flickrURL = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=" + apiKey +
-                "&tags=cat&format=json";
+                "&tags=" + mTag + "&format=json";
 
         if (isNetworkAvailable()){
             OkHttpClient client = new OkHttpClient();
